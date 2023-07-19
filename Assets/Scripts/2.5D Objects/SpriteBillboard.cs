@@ -4,34 +4,42 @@ namespace _2._5D_Objects
 {
     public class SpriteBillboard : MonoBehaviour
     {
-        public bool debugMsg = false;
-        [Range(0f, 15f)]
-        public float speedRotation = 15f;
-
         public Transform parentTransform;
-        
+
+        public bool staticBillboard;
         public bool freezeXRotation;
         public bool freezeYRotation;
         public bool freezeZRotation;
 
-        public Vector3 freezeValues = new Vector3(0, 0, 0);
+        public Vector3 freezeValues = new();
+        public Vector3 addedRotation = new();
 
-        private Transform _mainCamera;
-
+        private Transform mainCamera;
 
         private void Start()
         {
-            _mainCamera = Camera.main.transform;
+            SetCamera();
         }
 
         private void Update()
         {
-            Vector3 lookDir = (_mainCamera.position - transform.position).normalized;
-            Quaternion parentRot = parentTransform ? parentTransform.rotation : new();
-            //if (debugMsg) Debug.Log(newRot.eulerAngles);
-            transform.rotation = Quaternion.LookRotation(lookDir);
-            transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles - parentRot.eulerAngles);
-            
+            if (!mainCamera)
+            {
+                SetCamera();
+                return;
+            }
+
+            if (staticBillboard)
+            {
+                transform.rotation = mainCamera.rotation;
+            }
+            else
+            {
+                var parentRot = parentTransform ? parentTransform.rotation : new Quaternion();
+                transform.LookAt(mainCamera);
+                transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles - parentRot.eulerAngles);
+            }
+
             FreezeRotationAxis();
         }
 
@@ -44,7 +52,15 @@ namespace _2._5D_Objects
                 z = freezeZRotation ? freezeValues.z : transform.rotation.eulerAngles.z
             };
 
-            transform.localRotation = Quaternion.Euler(rotation);
+            transform.localRotation = Quaternion.Euler(rotation + addedRotation);
+        }
+
+        private void SetCamera()
+        {
+            var main = Camera.main;
+            if (!main) return;
+
+            mainCamera = main.transform;
         }
     }
 }
